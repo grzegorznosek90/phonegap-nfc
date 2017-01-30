@@ -28,10 +28,13 @@ import android.nfc.Tag;
 import android.nfc.TagLostException;
 import android.nfc.tech.Ndef;
 import android.nfc.tech.NdefFormatable;
+import android.nfc.tech.NfcV;
 import android.os.Parcelable;
 import android.util.Log;
 
 public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCompleteCallback {
+
+    private static final String REGISTER_NFCV = "registerNfcV";
     private static final String REGISTER_MIME_TYPE = "registerMimeType";
     private static final String REMOVE_MIME_TYPE = "removeMimeType";
     private static final String REGISTER_NDEF = "registerNdef";
@@ -91,7 +94,9 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
 
         createPendingIntent();
 
-        if (action.equalsIgnoreCase(REGISTER_MIME_TYPE)) {
+        if (action.equalsIgnoreCase(REGISTER_NFCV)) {
+          registerNfcV(callbackContext);
+        } else if (action.equalsIgnoreCase(REGISTER_MIME_TYPE)) {
             registerMimeType(data, callbackContext);
 
         } else if (action.equalsIgnoreCase(REMOVE_MIME_TYPE)) {
@@ -160,6 +165,10 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
         }
     }
 
+    private void registerNfcV(CallbackContext callbackContext) {
+          addTechList(new String[]{NfcV.class.getName()});
+          callbackContext.success();
+  }
     private void registerDefaultTag(CallbackContext callbackContext) {
       addTagFilter();
       callbackContext.success();
@@ -606,37 +615,39 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
                 Log.d(TAG, "parseMessage " + getIntent());
                 Intent intent = getIntent();
                 String action = intent.getAction();
+
+
                 Log.d(TAG, "action " + action);
                 if (action == null) {
                     return;
                 }
 
-                Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
-                Parcelable[] messages = intent.getParcelableArrayExtra((NfcAdapter.EXTRA_NDEF_MESSAGES));
 
-                if (action.equals(NfcAdapter.ACTION_NDEF_DISCOVERED)) {
-                    Ndef ndef = Ndef.get(tag);
-                    fireNdefEvent(NDEF_MIME, ndef, messages);
+                if (action.equals(NfcAdapter.ACTION_TECH_DISCOVERED) || action.equals(NfcAdapter.ACTION_TAG_DISCOVERED)){
+                     NfcvData ma;
 
-                } else if (action.equals(NfcAdapter.ACTION_TECH_DISCOVERED)) {
-                    for (String tagTech : tag.getTechList()) {
-                        Log.d(TAG, tagTech);
-                        if (tagTech.equals(NdefFormatable.class.getName())) {
-                            fireNdefFormatableEvent(tag);
-                        } else if (tagTech.equals(Ndef.class.getName())) { //
-                            Ndef ndef = Ndef.get(tag);
-                            fireNdefEvent(NDEF, ndef, messages);
-                        }
-                    }
-                }
+                     Tag tagFromIntent  = (Tag)intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+                     Parcelable[] messages = intent.getParcelableArrayExtra((NfcAdapter.EXTRA_NDEF_MESSAGES));
+                     NfcV mfc = NfcV.get(tagFromIntent);
+                     Tag tag = mfc.getTag();
+                     fireNfcVReadEvent(NFCV, mfc, messages);
 
-                if (action.equals(NfcAdapter.ACTION_TAG_DISCOVERED)) {
-                    fireTagEvent(tag);
                 }
 
                 setIntent(new Intent());
             }
         });
+    }
+
+    private void fireNfcVReadEvent(String type, NfcV nfcv, Parcelable[] messages) {
+
+        JSONObject jsonObject = buildNfcVReadJSON(nfcv, messages);
+        String tag = jsonObject.toString();
+
+        String command = MessageFormat.format(javaScriptEventTemplate, type, tag);
+        Log.v(TAG, command);
+        this.webView.sendJavascript(command);
+
     }
 
     private void fireNdefEvent(String type, Ndef ndef, Parcelable[] messages) {
