@@ -4,6 +4,7 @@ import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
 import android.nfc.Tag;
 import android.nfc.tech.Ndef;
+import android.nfc.tech.NfcV;
 import android.util.Log;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -44,6 +45,25 @@ public class Util {
                 }
             } catch (JSONException e) {
                 Log.e(TAG, "Failed to convert ndef into json: " + ndef.toString(), e);
+            }
+        }
+        return json;
+    }
+
+    static JSONObject nfcVToJSON(NfcV nfcv) {
+        JSONObject json = new JSONObject();
+        if (nfcv != null) {
+            try {
+                byte[] cmd = new byte[] {
+                    (byte)0x02, // Flags
+                    (byte)0x23, // Command: Read multiple blocks
+                    (byte)0x00, // First block (offset)
+                    (byte)0x08  // Number of blocks
+                };
+                byte[] userdata = nfcv.transceive(cmd);
+                json.put("data", byteArrayToJSON(userdata));
+            } catch (JSONException e) {
+                Log.e(TAG, "Failed to convert nfcv into json: " + nfcv.toString(), e);
             }
         }
         return json;

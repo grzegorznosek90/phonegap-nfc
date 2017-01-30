@@ -54,6 +54,7 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
     private static final String SHOW_SETTINGS = "showSettings";
 
     private static final String NDEF = "ndef";
+    private static final String NFCV = "nfcv";
     private static final String NDEF_MIME = "ndef-mime";
     private static final String NDEF_FORMATABLE = "ndef-formatable";
     private static final String TAG_DEFAULT = "tag";
@@ -627,10 +628,8 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
                      NfcvData ma;
 
                      Tag tagFromIntent  = (Tag)intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
-                     Parcelable[] messages = intent.getParcelableArrayExtra((NfcAdapter.EXTRA_NDEF_MESSAGES));
                      NfcV mfc = NfcV.get(tagFromIntent);
-                     Tag tag = mfc.getTag();
-                     fireNfcVReadEvent(NFCV, mfc, messages);
+                     fireNfcVReadEvent(NFCV, mfc);
 
                 }
 
@@ -639,9 +638,9 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
         });
     }
 
-    private void fireNfcVReadEvent(String type, NfcV nfcv, Parcelable[] messages) {
+    private void fireNfcVReadEvent(String type, NfcV nfcv) {
 
-        JSONObject jsonObject = buildNfcVReadJSON(nfcv, messages);
+        JSONObject jsonObject =Util.nfcVToJSON(nfcv);
         String tag = jsonObject.toString();
 
         String command = MessageFormat.format(javaScriptEventTemplate, type, tag);
@@ -674,6 +673,8 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
         Log.v(TAG, command);
         this.webView.sendJavascript(command);
     }
+
+
 
     JSONObject buildNdefJSON(Ndef ndef, Parcelable[] messages) {
 
