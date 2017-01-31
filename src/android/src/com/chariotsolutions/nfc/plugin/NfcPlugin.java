@@ -54,7 +54,7 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
     private static final String SHOW_SETTINGS = "showSettings";
 
     private static final String NDEF = "ndef";
-    private static final String NFCV = "nfcv";
+    private static final String NFCV = "nfcV";
     private static final String NDEF_MIME = "ndef-mime";
     private static final String NDEF_FORMATABLE = "ndef-formatable";
     private static final String TAG_DEFAULT = "tag";
@@ -620,16 +620,19 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
 
                 Log.d(TAG, "action " + action);
                 if (action == null) {
-                    return;
+                    fireMes("error");
+                    return ;
                 }
 
 
                 if (action.equals(NfcAdapter.ACTION_TECH_DISCOVERED) || action.equals(NfcAdapter.ACTION_TAG_DISCOVERED)){
+                    
 
-
-                     Tag tagFromIntent  = (Tag)intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
-                     NfcV mfc = NfcV.get(tagFromIntent);
-                     fireNfcVReadEvent(NFCV, mfc);
+                    Tag tagFromIntent  = (Tag)intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+                   
+                    NfcV mfc = NfcV.get(tagFromIntent);
+                  
+                    fireNfcVReadEvent(NFCV, mfc);
 
                 }
 
@@ -638,14 +641,45 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
         });
     }
 
+    private void fireMes(String mes){
+        this.webView.sendJavascript(mes);
+    }
+
     private void fireNfcVReadEvent(String type, NfcV nfcv) {
-
-        JSONObject jsonObject =Util.nfcVToJSON(nfcv);
-        String tag = jsonObject.toString();
-
+        JSONObject json = new JSONObject();
+        String msg = null;
+        if (nfcv != null) {
+            try {
+                nfcv.connect();
+                int poz_odcz=0;
+                int len = 512;
+                byte [] dane_odcz = new byte[len];
+                for (int blok=0; blok<(len / 0x40); blok++) {       // 0x40 = 16*4 bajtów w bloku
+                    byte[] outb = new byte[4];
+                    int ofs=0;
+                    outb[ofs++] = 0x02;
+                    outb[ofs++] = 0x23;  // command read multiple blocks
+                    outb[ofs++] = (byte) (blok * 0x10);  // addr LSB
+                    outb[ofs++] = 0x10 - 1;  // lenght  64 bajty= 16 blokow
+                    byte[] errorcode_and_block0 = nfcv.transceive(outb);
+                    if (errorcode_and_block0[0]==0) {
+                        for (int j=1; j<errorcode_and_block0.length; j++) {
+                            dane_odcz[poz_odcz++]=errorcode_and_block0[j];
+                        }
+                    } else {
+                        break;
+                    }
+                }
+               json.put("data", Util.byteArrayToJSON(dane_odcz));
+            } catch (IOException e) {
+                Log.e(TAG, "Failed to convert nfcv into json: " + nfcv.toString(), e);
+            } catch (JSONException e) {
+                Log.e(TAG, "Failed to convert nfcv into json: " + nfcv.toString(), e);
+            } 
+        } 
+        String tag = json.toString();
         String command = MessageFormat.format(javaScriptEventTemplate, type, tag);
-        Log.v(TAG, command);
-        this.webView.sendJavascript(command);
+       this.webView.sendJavascript(command);
 
     }
 
