@@ -625,7 +625,7 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
 
 
                 if (action.equals(NfcAdapter.ACTION_TECH_DISCOVERED) || action.equals(NfcAdapter.ACTION_TAG_DISCOVERED)){
-                     NfcvData ma;
+
 
                      Tag tagFromIntent  = (Tag)intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
                      NfcV mfc = NfcV.get(tagFromIntent);
