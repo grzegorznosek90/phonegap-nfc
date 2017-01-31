@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import java.io.IOException;
+
 public class Util {
 
     static final String TAG = "NfcPlugin";
@@ -63,6 +65,8 @@ public class Util {
                 byte[] userdata = nfcv.transceive(cmd);
                 json.put("data", byteArrayToJSON(userdata));
             } catch (JSONException e) {
+                Log.e(TAG, "Failed to convert nfcv into json: " + nfcv.toString(), e);
+            } catch (IOException e) {
                 Log.e(TAG, "Failed to convert nfcv into json: " + nfcv.toString(), e);
             }
         }
