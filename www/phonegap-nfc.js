@@ -411,9 +411,9 @@ var ndef = {
 
 // nfc provides javascript wrappers to the native phonegap implementation
 var nfc = {
-    addNfcVListener: function (callback, win, fail) {
+    addNfcVListener: function (bytes,callback, win, fail) {
           document.addEventListener("nfcV", callback, false);
-          cordova.exec(win, fail, "NfcPlugin", "registerNfcV", []);
+          cordova.exec(win, fail, "NfcPlugin", "registerNfcV", bytes);
     },
     addTagDiscoveredListener: function (callback, win, fail) {
         document.addEventListener("tag", callback, false);
@@ -435,8 +435,8 @@ var nfc = {
         cordova.exec(win, fail, "NfcPlugin", "registerNdefFormatable", []);
     },
 
-    write: function (ndefMessage, win, fail) {
-        cordova.exec(win, fail, "NfcPlugin", "writeTag", [ndefMessage]);
+    write: function (bytes, win, fail) {
+        cordova.exec(win, fail, "NfcPlugin", "writeTag", [bytes]);
     },
 
     makeReadOnly: function (win, fail) {
@@ -484,6 +484,11 @@ var nfc = {
     removeNdefListener: function (callback, win, fail) {
         document.removeEventListener("ndef", callback, false);
         cordova.exec(win, fail, "NfcPlugin", "removeNdef", []);
+    },
+
+    removeNfcVListener: function (callback, win, fail) {
+        document.removeEventListener("nfcV", callback, false);
+        cordova.exec(win, fail, "NfcPlugin", "removeNfcV", []);
     },
 
     showSettings: function (win, fail) {
