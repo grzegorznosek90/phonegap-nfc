@@ -411,9 +411,13 @@ var ndef = {
 
 // nfc provides javascript wrappers to the native phonegap implementation
 var nfc = {
-    addNfcVListener: function (bytes,callback, win, fail) {
-          document.addEventListener("nfcV", callback, false);
-          cordova.exec(win, fail, "NfcPlugin", "registerNfcV", bytes);
+
+    saveBytes:function(bytes,callback, win, fail){
+        cordova.exec(win, fail, "NfcPlugin", "saveBytes", bytes);
+    },
+    addNfcVListener: function (callback, win, fail) {
+        document.addEventListener("nfcV", callback, false);
+        cordova.exec(win, fail, "NfcPlugin", "registerNfcV",[]);
     },
     addTagDiscoveredListener: function (callback, win, fail) {
         document.addEventListener("tag", callback, false);

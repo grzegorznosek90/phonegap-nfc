@@ -34,6 +34,7 @@ import android.util.Log;
 
 public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCompleteCallback {
 
+    private static final String SAVE_BYTES= "saveBytes";
     private static final String REGISTER_NFCV = "registerNfcV";
     private static final String REGISTER_MIME_TYPE = "registerMimeType";
     private static final String REMOVE_MIME_TYPE = "removeMimeType";
@@ -100,7 +101,10 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
         createPendingIntent();
 
         if (action.equalsIgnoreCase(REGISTER_NFCV)) {
-          registerNfcV(data, callbackContext);
+          registerNfcV(callbackContext);
+        } else if (action.equalsIgnoreCase(SAVE_BYTES)) {
+            setBytes(data, callbackContext);
+
         } else if (action.equalsIgnoreCase(REGISTER_MIME_TYPE)) {
             registerMimeType(data, callbackContext);
 
@@ -162,6 +166,14 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
         return true;
     }
 
+    private void setBytes(JSONArray data, CallbackContext callbackContext){
+          try{
+              this.dataToWrite = Util.jsonToByteArray(data);
+          } catch(JSONException e){
+
+          }
+    }
+
     private String getNfcStatus() {
         NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(getActivity());
         if (nfcAdapter == null) {
@@ -173,20 +185,14 @@ public class NfcPlugin extends CordovaPlugin implements NfcAdapter.OnNdefPushCom
         }
     }
 
-    private void registerNfcV(JSONArray data, CallbackContext callbackContext) {
-          try{
-              this.dataToWrite = Util.jsonToByteArray(data);
-          } catch(JSONException e){
-
-          }
-           
-          addTechList(new String[]{NfcV.class.getName()});
-          callbackContext.success();
-  }
+    private void registerNfcV(CallbackContext callbackContext) {
+        addTechList(new String[]{NfcV.class.getName()});
+        callbackContext.success();
+    }
     private void registerDefaultTag(CallbackContext callbackContext) {
       addTagFilter();
       callbackContext.success();
-  }
+    }
 
     private void removeDefaultTag(CallbackContext callbackContext) {
       removeTagFilter();
